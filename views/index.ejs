@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebSocket Chatting</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <script type="text/javascript" src="/script/index.js" defer></script>
+    <link rel="stylesheet" href="/stylesheets/index.css">
+</head>
+
+<body>
+    <div id="input_name_div">
+        <input id="input_name" autocomplete="off" placeholder="what's your name"/>
+        <button type="button" id="nameSave_btn" onclick="nameSave()">Save</button>
+    </div>
+    <div id="chat_container">
+        <div>
+            <h3>Chat Room</h3>
+            <h4 id="room-name"></h4>
+            <h4 id="user-num">참여자 수 :</h4>
+            <h4 id="user-list">참여자 :</h4>
+        </div>
+        <div class="select">
+            <select id="selectBox" onchange="changeSelection()">
+                <option selected disabled>채팅방을 선택하세요</option>
+                <option>Room1</option>
+                <option>Room2</option>
+                <option>Room3</option>
+                <option>Room4</option>
+            </select>
+        </div>
+        <div class="chat-wrapper" id="chat-wrapper">
+            <div id="messages"></div>
+            <div id="form">
+                <input id="input" autocomplete="off" /><button type="button" id="send_btn" onclick="send()">Send</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
