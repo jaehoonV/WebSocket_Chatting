@@ -4,11 +4,12 @@ const path = require('path');
 const socketIo = require('socket.io');
 const hostname = '127.0.0.1';
 const port = 3000;
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-let indexRouter = require('./routes/index');
+const indexRouter = require('./routes/index');
 
 app.use('/node_modules', express.static(path.join(__dirname, '/node_modules')));
 app.use(express.urlencoded({ extended: true }));
@@ -19,17 +20,18 @@ app.use(express.static("public"));
 
 app.use('/', indexRouter);
 
-// Socket.IO 설정
 io.on("connection", (socket) => {
     socket.on("new join room", (preJoinRoom, newJoinRoom, name) => {
-        socket.name = name;
+        if (!name || typeof name !== "string" || !name.trim()) return;
+        if (!newJoinRoom || typeof newJoinRoom !== "string" || !newJoinRoom.trim()) return;
+
+        socket.name = name.trim();
 
         socket.join(newJoinRoom);
         socket.room = newJoinRoom;
 
-        let clients = io.sockets.adapter.rooms.get(newJoinRoom);
-
-        const { currentChatRoomUserList, roomClientsNum } = getRoomInfo(clients);
+        const newRoomClients = io.sockets.adapter.rooms.get(newJoinRoom);
+        const { currentChatRoomUserList, roomClientsNum } = getRoomInfo(newRoomClients);
 
         io.to(newJoinRoom).emit(
             "notice",
@@ -39,16 +41,16 @@ io.on("connection", (socket) => {
             " 님이 들어왔습니다"
         );
 
-        if (preJoinRoom !== "") {
+        if (preJoinRoom) {
             socket.leave(preJoinRoom);
 
-            let clients = io.sockets.adapter.rooms.get(preJoinRoom);
-            const { currentChatRoomUserList, roomClientsNum } = getRoomInfo(clients);
+            const prevRoomClients = io.sockets.adapter.rooms.get(preJoinRoom);
+            const prevRoomInfo = getRoomInfo(prevRoomClients);
 
             io.to(preJoinRoom).emit(
                 "notice",
-                currentChatRoomUserList,
-                roomClientsNum,
+                prevRoomInfo.currentChatRoomUserList,
+                prevRoomInfo.roomClientsNum,
                 socket.name,
                 " 님이 나갔습니다"
             );
@@ -56,14 +58,20 @@ io.on("connection", (socket) => {
     });
 
     socket.on("chat message", (msg) => {
-        io.to(socket.room).emit("chat message", socket.name, msg);
+        if (!socket.room) return;
+        if (!msg || typeof msg !== "string" || !msg.trim()) return;
+
+        io.to(socket.room).emit("chat message", socket.name, msg.trim());
     });
 
     socket.on("disconnect", () => {
-        let clients = io.sockets.adapter.rooms.get(socket.room);
+        const room = socket.room;
+        if (!room || !socket.name) return;
+
+        const clients = io.sockets.adapter.rooms.get(room);
         const { currentChatRoomUserList, roomClientsNum } = getRoomInfo(clients);
 
-        io.emit(
+        socket.to(room).emit(
             "notice",
             currentChatRoomUserList,
             roomClientsNum,
@@ -74,21 +82,24 @@ io.on("connection", (socket) => {
 });
 
 function getRoomInfo(clients) {
-    const roomClientsNum = clients ? clients.size : 0;
+    const names = [];
 
-    let currentChatRoomUserList = "";
     if (clients) {
-        clients.forEach((element) => {
-            currentChatRoomUserList += io.sockets.sockets.get(element).name + ", ";
+        clients.forEach((socketId) => {
+            const clientSocket = io.sockets.sockets.get(socketId);
+            if (clientSocket?.name) {
+                names.push(clientSocket.name);
+            }
         });
     }
 
-    currentChatRoomUserList = currentChatRoomUserList.slice(0, currentChatRoomUserList.length - 2);
-
-    return { roomClientsNum, currentChatRoomUserList };
+    return {
+        roomClientsNum: names.length,
+        currentChatRoomUserList: names.join(", ")
+    };
 }
 
-server.listen(port, hostname, () => {
+server.listen(port, () => {
     console.log(`Server running at http://${hostname}:${port}/`);
 });
 
