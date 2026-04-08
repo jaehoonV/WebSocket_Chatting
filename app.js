@@ -61,7 +61,8 @@ io.on("connection", (socket) => {
         if (!socket.room) return;
         if (!msg || typeof msg !== "string" || !msg.trim()) return;
 
-        io.to(socket.room).emit("chat message", socket.name, msg.trim());
+        const time = getFormattedTime();
+        io.to(socket.room).emit("chat message", socket.name, msg.trim(), time);
     });
 
     socket.on("disconnect", () => {
@@ -97,6 +98,16 @@ function getRoomInfo(clients) {
         roomClientsNum: names.length,
         currentChatRoomUserList: names.join(", ")
     };
+}
+
+function getFormattedTime() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? '오후' : '오전';
+    const displayHours = hours % 12 || 12;
+    const formattedTime = `${ampm} ${displayHours}:${minutes}`;
+    return formattedTime;
 }
 
 server.listen(port, () => {

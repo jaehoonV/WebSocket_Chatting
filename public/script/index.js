@@ -30,7 +30,6 @@ $('#input').on("keydown", function(e){
 
 // 메시지 입력 후 보내기
 function send() {
-    console.log("input = ", $('#input').val());
     if ($('#input').val()) {
         socket.emit("chat message", $('#input').val());
         $('#input').val("");
@@ -42,12 +41,16 @@ socket.on("notice", (currentChatRoomUserList, userNum, name, msg) => {
     $('#user-num').text(`참여자 수 : ${userNum}`);
     $('#user-list').text(`참여자 : ${currentChatRoomUserList}`);
     const message = name + msg;
-    createNewMessage(message, 'notice');
+    createNewMessage(name, message, 'notice');
 });
 
 // 실시간 채팅 박스 생성
-socket.on("chat message", (name, msg) => {
-    let message = "";
+socket.on("chat message", (name, msg, time) => {
+    createNewMessage(name, msg, 'chat', time);
+});
+
+// 메시지 새로 생성
+function createNewMessage(name, msg, type, time) {
     let mine_chk = username == name;
     if(mine_chk){
         message = msg;
@@ -55,22 +58,24 @@ socket.on("chat message", (name, msg) => {
         message = name + " : " + msg;
     }
 
-    createNewMessage(message, 'chat', mine_chk);
-});
-
-// 메시지 새로 생성
-function createNewMessage(msg, type, mine_chk) {
     let item;
     if(type == 'notice'){
         item = `<div class='notice'>${msg}</div>`;
     }else{
         if(mine_chk){
-            item = `<div class='my_chat_box'> 
+            item = `<div class='my_chat_box'>
                         <span>${msg}</span>
+                        <em>${time}</em>
+                        <div class="chat_r"></div>
                     </div>`;
         }else{
-            item = `<div class='chat_box'> 
-                        <span>${msg}</span>
+            item = `<div>
+                        <div class='user_name'>${name}</div>
+                        <div class='chat_box'>
+                            <span>${msg}</span>
+                            <em>${time}</em>
+                            <div class="chat_l"></div>
+                        </div>
                     </div>`;
         }
     }
