@@ -6,6 +6,8 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
     <script type="text/javascript" src="/script/index.js" defer></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <link rel="stylesheet" href="/stylesheets/index.css">
 </head>
 
@@ -32,8 +34,11 @@
         </div>
         <div class="chat-wrapper" id="chat-wrapper">
             <div id="messages"></div>
-            <div id="form">
-                <input id="input" autocomplete="off" /><button type="button" id="send_btn" onclick="send()">Send</button>
+            <div id="chat_input_container">
+                <textarea spellcheck="false" name="chat_input" id="chat_input" placeholder="메시지를 입력하세요 (Shift/Alt+Enter로 줄바꿈)"></textarea>
+                <div id="send_btn_container">
+                    <button id="send_btn" onclick="send()"><ion-icon name="send"></ion-icon></button>
+                </div>
             </div>
         </div>
     </div>

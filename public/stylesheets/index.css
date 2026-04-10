@@ -12,34 +12,36 @@
     margin: 30px auto;
 }
 
-#form {
+#chat_input_container {
     background: rgba(0, 0, 0, 0.15);
     padding: 0.25rem;
-    position: relative;
-    bottom: 0;
-    left: 0;
-    right: 0;
     display: flex;
-    height: 3rem;
+    flex-direction: column;
     box-sizing: border-box;
     backdrop-filter: blur(10px);
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
 }
 
-#input {
+#chat_input {
     border: none;
-    padding: 0 1rem;
-    flex-grow: 1;
-    border-radius: 10px;
-    margin: 0.25rem;
+    padding: 4px;
+    margin: 1px;
+    width: calc(100% - 2px);
+    resize: none;
+    line-height: 20px;
+    box-sizing: border-box;
+    height: 48px;
+    min-height: 48px;
+    max-height: 108px;
+    overflow-y: hidden;
 }
 
-#input:focus {
+#chat_input:focus {
     outline: none;
 }
 
-#send_btn, #nameSave_btn {
+#nameSave_btn {
     background: #333;
     border: none;
     padding: 0 1rem;
@@ -48,6 +50,22 @@
     outline: none;
     color: #fff;
     cursor: pointer;
+}
+
+#send_btn {
+    background: #333;
+    border: none;
+    padding: 4px 10px;
+    margin: 4px;
+    border-radius: 3px;
+    outline: none;
+    color: #fff;
+    cursor: pointer;
+}
+
+#send_btn_container{
+    display: flex;
+    flex-direction: row-reverse;
 }
 
 #nameSave_btn {
@@ -61,7 +79,8 @@
 #messages {
     margin: 0;
     padding: 5px;
-    height: 500px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }
 
@@ -92,9 +111,12 @@
 .chat-wrapper {
     margin: 0 auto;
     width: 400px;
-    position: relative;
+    height: 560px;
+    display: flex;
+    flex-direction: column;
     background: #dbdbdb;
     border-radius: 10px;
+    overflow: hidden;
 }
 
 h3,
@@ -124,6 +146,7 @@ h4 {
     flex-direction: row-reverse;
     margin: 6px;
     font-size: 14px;
+    gap: 2px;
 }
 
 .chat_box{
@@ -132,6 +155,7 @@ h4 {
     flex-direction: row;
     margin: 6px;
     font-size: 14px;
+    gap: 2px;
 }
 
 .my_chat_box>span{

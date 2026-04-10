@@ -25,7 +25,7 @@ io.on("connection", (socket) => {
         if (!name || typeof name !== "string" || !name.trim()) return;
         if (!newJoinRoom || typeof newJoinRoom !== "string" || !newJoinRoom.trim()) return;
 
-        socket.name = name.trim();
+        socket.name = sanitizeUsername(name);
 
         socket.join(newJoinRoom);
         socket.room = newJoinRoom;
@@ -108,6 +108,14 @@ function getFormattedTime() {
     const displayHours = hours % 12 || 12;
     const formattedTime = `${ampm} ${displayHours}:${minutes}`;
     return formattedTime;
+}
+
+function sanitizeUsername(name) {
+    return name
+        .trim()
+        .replace(/\s+/g, " ")
+        .replace(/[<>]/g, "")
+        .slice(0, 20);
 }
 
 server.listen(port, () => {

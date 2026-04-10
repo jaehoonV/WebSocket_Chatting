@@ -11,13 +11,45 @@ $('#input_name').on("keydown", function(e){
 });
 
 function nameSave(){
+    let raw = $('#input_name').val();
+    let safe = sanitizeUsername(raw);
+
+    if (!safe) return;
+
+    username = safe;
+
     $('#input_name_div').hide();
     $('#chat_container').show();
-    username = $('#input_name').val();
+    $('#chat-wrapper').hide();
 }
 
-$('#input').on("keydown", function(e){
-    if (e.altKey && e.keyCode === 13) { // Alt key + Enter key is pressed
+const $chatInput = $('#chat_input');
+const MAX_LINES = 5;
+
+function autoResize() {
+    const el = $chatInput[0];
+    const lineHeight = parseInt($chatInput.css('line-height')) || 20;
+    const paddingTop = parseInt($chatInput.css('padding-top')) || 0;
+    const paddingBottom = parseInt($chatInput.css('padding-bottom')) || 0;
+    const maxHeight = lineHeight * MAX_LINES + paddingTop + paddingBottom;
+
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px';
+
+    if (el.scrollHeight > maxHeight) {
+        el.style.overflowY = 'auto';
+    } else {
+        el.style.overflowY = 'hidden';
+    }
+}
+
+// 입력할 때마다 높이 조절
+$chatInput.on('input', function () {
+    autoResize();
+});
+
+$('#chat_input').on("keydown", function(e){
+    if ((e.altKey || e.shiftKey) && e.keyCode === 13) { // Alt, Shift  key + Enter key is pressed
         $('#chat_input').blur();
         $('#chat_input').val($('#chat_input').val() + "\n");
         $('#chat_input').focus();
@@ -30,10 +62,13 @@ $('#input').on("keydown", function(e){
 
 // 메시지 입력 후 보내기
 function send() {
-    if ($('#input').val()) {
-        socket.emit("chat message", $('#input').val());
-        $('#input').val("");
-    }
+    const msg = $('#chat_input').val();
+    if (!msg || !msg.trim()) return;
+
+    socket.emit("chat message", msg);
+    $('#chat_input').val('');
+
+    autoResize();
 }
 
 // 참여자 입출여부 공지
@@ -51,36 +86,36 @@ socket.on("chat message", (name, msg, time) => {
 
 // 메시지 새로 생성
 function createNewMessage(name, msg, type, time) {
-    let mine_chk = username == name;
-    if(mine_chk){
-        message = msg;
-    }else{
-        message = name + " : " + msg;
+    const mineChk = username === name;
+
+    if (type === 'notice') {
+        const $notice = $('<div>').addClass('notice').text(msg);
+        $('#messages').append($notice);
+        $("#messages").scrollTop($("#messages").prop("scrollHeight"));
+        return;
     }
 
-    let item;
-    if(type == 'notice'){
-        item = `<div class='notice'>${msg}</div>`;
-    }else{
-        if(mine_chk){
-            item = `<div class='my_chat_box'>
-                        <span>${msg}</span>
-                        <em>${time}</em>
-                        <div class="chat_r"></div>
-                    </div>`;
-        }else{
-            item = `<div>
-                        <div class='user_name'>${name}</div>
-                        <div class='chat_box'>
-                            <span>${msg}</span>
-                            <em>${time}</em>
-                            <div class="chat_l"></div>
-                        </div>
-                    </div>`;
-        }
+    if (mineChk) {
+        const $wrapper = $('<div>').addClass('my_chat_box');
+        const $span = $('<span>').text(msg);
+        const $time = $('<em>').text(time);
+        const $tail = $('<div>').addClass('chat_r');
+
+        $wrapper.append($span, $time, $tail);
+        $('#messages').append($wrapper);
+    } else {
+        const $outer = $('<div>');
+        const $userName = $('<div>').addClass('user_name').text(name);
+        const $chatBox = $('<div>').addClass('chat_box');
+        const $span = $('<span>').text(msg);
+        const $time = $('<em>').text(time);
+        const $tail = $('<div>').addClass('chat_l');
+
+        $chatBox.append($span, $time, $tail);
+        $outer.append($userName, $chatBox);
+        $('#messages').append($outer);
     }
 
-    $('#messages').append(item);
     $("#messages").scrollTop($("#messages").prop("scrollHeight"));
 }
 
@@ -90,7 +125,11 @@ function changeSelection() {
     let newJoinRoom = select.options[select.selectedIndex].text;
 
     $('#room-name').text(newJoinRoom);
-    if(input_name){
+
+    if(username){
+        $('#chat-wrapper').show();
+        $('#chat_input').focus();
+
         if (preJoinRoom !== newJoinRoom) {
             $('#messages').html("");
             socket.emit("new join room", preJoinRoom, newJoinRoom, username);
@@ -98,4 +137,12 @@ function changeSelection() {
     }
     
     preJoinRoom = newJoinRoom;
+}
+
+function sanitizeUsername(name) {
+    return name
+        .trim()
+        .replace(/\s+/g, " ")
+        .replace(/[<>]/g, "")
+        .slice(0, 20);
 }
