@@ -21,25 +21,15 @@ app.use(express.static("public"));
 app.use('/', indexRouter);
 
 io.on("connection", (socket) => {
-    socket.on("new join room", (preJoinRoom, newJoinRoom, name) => {
+    socket.on("register user", (name) => {
         if (!name || typeof name !== "string" || !name.trim()) return;
-        if (!newJoinRoom || typeof newJoinRoom !== "string" || !newJoinRoom.trim()) return;
-
         socket.name = sanitizeUsername(name);
+        emitConnectedUsers();
+    });
 
-        socket.join(newJoinRoom);
-        socket.room = newJoinRoom;
-
-        const newRoomClients = io.sockets.adapter.rooms.get(newJoinRoom);
-        const { currentChatRoomUserList, roomClientsNum } = getRoomInfo(newRoomClients);
-
-        io.to(newJoinRoom).emit(
-            "notice",
-            currentChatRoomUserList,
-            roomClientsNum,
-            socket.name,
-            " 님이 들어왔습니다"
-        );
+    socket.on("new join room", (preJoinRoom, newJoinRoom, name) => {
+        if (!socket.name) return;
+        if (!newJoinRoom || typeof newJoinRoom !== "string" || !newJoinRoom.trim()) return;
 
         if (preJoinRoom) {
             socket.leave(preJoinRoom);
@@ -55,6 +45,22 @@ io.on("connection", (socket) => {
                 " 님이 나갔습니다"
             );
         }
+
+        socket.join(newJoinRoom);
+        socket.room = newJoinRoom;
+
+        const newRoomClients = io.sockets.adapter.rooms.get(newJoinRoom);
+        const newRoomInfo = getRoomInfo(newRoomClients);
+
+        io.to(newJoinRoom).emit(
+            "notice",
+            newRoomInfo.currentChatRoomUserList,
+            newRoomInfo.roomClientsNum,
+            socket.name,
+            " 님이 들어왔습니다"
+        );
+
+        emitConnectedUsers();
     });
 
     socket.on("chat message", (msg) => {
@@ -67,18 +73,20 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         const room = socket.room;
-        if (!room || !socket.name) return;
+        if (room && socket.name) {
+            const clients = io.sockets.adapter.rooms.get(room);
+            const { currentChatRoomUserList, roomClientsNum } = getRoomInfo(clients);
 
-        const clients = io.sockets.adapter.rooms.get(room);
-        const { currentChatRoomUserList, roomClientsNum } = getRoomInfo(clients);
+            socket.to(room).emit(
+                "notice",
+                currentChatRoomUserList,
+                roomClientsNum,
+                socket.name,
+                " 님이 나갔습니다"
+            );
+        }
 
-        socket.to(room).emit(
-            "notice",
-            currentChatRoomUserList,
-            roomClientsNum,
-            socket.name,
-            " 님이 나갔습니다"
-        );
+        emitConnectedUsers();
     });
 });
 
@@ -98,6 +106,25 @@ function getRoomInfo(clients) {
         roomClientsNum: names.length,
         currentChatRoomUserList: names.join(", ")
     };
+}
+
+function getConnectedUsers() {
+    const users = [];
+
+    io.sockets.sockets.forEach((clientSocket) => {
+        if (clientSocket?.name) {
+            users.push({
+                name: clientSocket.name,
+                room: clientSocket.room || ""
+            });
+        }
+    });
+
+    return users;
+}
+
+function emitConnectedUsers() {
+    io.emit("connected users", getConnectedUsers());
 }
 
 function getFormattedTime() {

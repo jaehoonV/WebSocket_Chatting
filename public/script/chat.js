@@ -18,6 +18,8 @@ function nameSave(){
 
     username = safe;
 
+    socket.emit("register user", username);
+
     $('#input_name_div').hide();
     $('#chat_container').show();
     $('#chat-wrapper').hide();
@@ -71,10 +73,34 @@ function send() {
     autoResize();
 }
 
+socket.on("connected users", (users) => {
+    renderConnectedUsers(users);
+});
+
+function renderConnectedUsers(users) {
+    const $list = $('#connected-user-list');
+    const $count = $('#connected-user-count');
+    $list.empty();
+
+    const total = users ? users.length : 0;
+    $count.text(`${total}명`);
+
+    if (!users || users.length === 0) {
+        $list.append($('<li>').text('접속 중인 사용자가 없습니다.'));
+        return;
+    }
+
+    users.forEach((user) => {
+        const roomText = user.room ? user.room : '로비';
+        const text = `${user.name} (${roomText})`;
+        $list.append($('<li>').text(text));
+    });
+}
+
 // 참여자 입출여부 공지
 socket.on("notice", (currentChatRoomUserList, userNum, name, msg) => {
-    $('#user-num').text(`참여자 수 : ${userNum}`);
-    $('#user-list').text(`참여자 : ${currentChatRoomUserList}`);
+    $('#user-num').text(`${userNum}명`);
+    $('#user-list').text(currentChatRoomUserList || '아직 참여자가 없습니다.');
     const message = name + msg;
     createNewMessage(name, message, 'notice');
 });
@@ -116,13 +142,19 @@ function createNewMessage(name, msg, type, time) {
         $('#messages').append($outer);
     }
 
-    $("#messages").scrollTop($("#messages").prop("scrollHeight"));
+    requestAnimationFrame(() => {
+        const el = $("#messages")[0];
+        el.scrollTop = el.scrollHeight;
+    });
 }
 
 // 채팅방 선택 및 변경
 function changeSelection() {
     let select = document.getElementById("selectBox");
     let newJoinRoom = select.options[select.selectedIndex].text;
+    $('#room-badge').text(newJoinRoom);
+    $('#user-num').text('0명');
+    $('#user-list').text('입장 정보를 불러오는 중...');
 
     $('#room-name').text(newJoinRoom);
 
@@ -132,7 +164,7 @@ function changeSelection() {
 
         if (preJoinRoom !== newJoinRoom) {
             $('#messages').html("");
-            socket.emit("new join room", preJoinRoom, newJoinRoom, username);
+            socket.emit("new join room", preJoinRoom, newJoinRoom);
         }
     }
     
