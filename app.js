@@ -21,10 +21,44 @@ app.use(express.static("public"));
 app.use('/', indexRouter);
 
 io.on("connection", (socket) => {
-    socket.on("register user", (name) => {
-        if (!name || typeof name !== "string" || !name.trim()) return;
-        socket.name = sanitizeUsername(name);
+    socket.on("register user", (name, callback) => {
+        if (typeof callback !== "function") return;
+
+        if (!name || typeof name !== "string" || !name.trim()) {
+            callback({
+                success: false,
+                message: "올바른 사용자명을 입력하세요."
+            });
+            return;
+        }
+
+        const sanitizedName = sanitizeUsername(name);
+
+        if (!sanitizedName) {
+            callback({
+                success: false,
+                message: "올바른 사용자명을 입력하세요."
+            });
+            return;
+        }
+
+        const isDuplicate = isUsernameTaken(sanitizedName);
+
+        if (isDuplicate) {
+            callback({
+                success: false,
+                message: "이미 사용 중인 이름입니다. 다른 이름을 입력하세요."
+            });
+            return;
+        }
+
+        socket.name = sanitizedName;
         emitConnectedUsers();
+
+        callback({
+            success: true,
+            username: sanitizedName
+        });
     });
 
     socket.on("new join room", (preJoinRoom, newJoinRoom, name) => {
@@ -90,6 +124,15 @@ io.on("connection", (socket) => {
     });
 });
 
+function isUsernameTaken(name) {
+    for (const clientSocket of io.sockets.sockets.values()) {
+        if (clientSocket?.name === name) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function getRoomInfo(clients) {
     const names = [];
 
@@ -104,7 +147,7 @@ function getRoomInfo(clients) {
 
     return {
         roomClientsNum: names.length,
-        currentChatRoomUserList: names.join(", ")
+        currentChatRoomUserList: names
     };
 }
 

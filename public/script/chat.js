@@ -10,19 +10,45 @@ $('#input_name').on("keydown", function(e){
     }
 });
 
+$('#input_name').on('input', function () {
+    clearNameError();
+});
+
 function nameSave(){
     let raw = $('#input_name').val();
     let safe = sanitizeUsername(raw);
 
-    if (!safe) return;
+    if (!safe) {
+        showNameError('이름을 입력하세요.');
+        $('#input_name').focus();
+        return;
+    }
 
-    username = safe;
+    socket.emit("register user", safe, (res) => {
+        if (!res || !res.success) {
+            showNameError(res?.message || '사용자 등록 실패');
+            $('#input_name').focus();
+            return;
+        }
+        
+        clearNameError();
 
-    socket.emit("register user", username);
+        username = res.username;
 
-    $('#input_name_div').hide();
-    $('#chat_container').show();
-    $('#chat-wrapper').hide();
+        $('#input_name_div').hide();
+        $('#chat_container').show();
+        $('#chat-wrapper').hide();
+    });
+}
+
+function showNameError(msg) {
+    const $error = $('#name-error');
+    $error.text(msg).addClass('show');
+}
+
+function clearNameError() {
+    const $error = $('#name-error');
+    $error.text('').removeClass('show');
 }
 
 const $chatInput = $('#chat_input');
@@ -77,6 +103,7 @@ socket.on("connected users", (users) => {
     renderConnectedUsers(users);
 });
 
+// 전체 접속자 정보 렌더링
 function renderConnectedUsers(users) {
     const $list = $('#connected-user-list');
     const $count = $('#connected-user-count');
@@ -97,10 +124,35 @@ function renderConnectedUsers(users) {
     });
 }
 
+// 채팅방 접속자 정보 렌더링
+function renderRoomUsers(users, userNum) {
+    const $list = $('#room-user-list');
+    const $count = $('#room-user-count');
+
+    $list.empty();
+    $count.text(`${userNum || 0}명`);
+
+    if (!Array.isArray(users) || users.length === 0) {
+        renderEmptyRoomUsers($list);
+        return;
+    }
+
+    users.forEach((user) => {
+        $list.append($('<li>').text(user));
+    });
+}
+
+function renderEmptyRoomUsers($target) {
+    $target.append(
+        $('<li>')
+            .addClass('member-list-empty')
+            .text('아직 참여자가 없습니다.')
+    );
+}
+
 // 참여자 입출여부 공지
-socket.on("notice", (currentChatRoomUserList, userNum, name, msg) => {
-    $('#user-num').text(`${userNum}명`);
-    $('#user-list').text(currentChatRoomUserList || '아직 참여자가 없습니다.');
+socket.on("notice", (users, userNum, name, msg) => {
+    renderRoomUsers(users, userNum);
     const message = name + msg;
     createNewMessage(name, message, 'notice');
 });
@@ -154,9 +206,8 @@ function changeSelection() {
     let newJoinRoom = select.options[select.selectedIndex].text;
     $('#room-badge').text(newJoinRoom);
     $('#user-num').text('0명');
-    $('#user-list').text('입장 정보를 불러오는 중...');
-
-    $('#room-name').text(newJoinRoom);
+    $('#room-user-count').text('0명');
+    $('#room-user-list').html('<li class="member-list-empty">입장 정보를 불러오는 중...</li>');
 
     if(username){
         $('#chat-wrapper').show();

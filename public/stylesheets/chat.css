@@ -62,7 +62,7 @@ select {
     width: 100%;
     max-width: 520px;
     margin: 80px auto 0;
-    padding: 36px 32px;
+    padding: 36px 32px 16px 32px;
     border-radius: 28px;
     background: rgba(255, 255, 255, 0.78);
     backdrop-filter: blur(18px);
@@ -136,6 +136,22 @@ select {
     transform: translateY(-1px);
 }
 
+.input-error {
+    margin-top: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ef4444;
+    min-height: 18px;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: all 0.2s ease;
+}
+
+.input-error.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .chat-layout {
     position: relative;
     z-index: 1;
@@ -163,6 +179,7 @@ select {
     border-radius: 24px;
     padding: 22px;
     box-shadow: 3px 3px 3px 0px rgba(45, 64, 124, 0.10);
+    min-height: 0;
 }
 
 .panel-label {
@@ -179,7 +196,6 @@ select {
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    margin-bottom: 14px;
 }
 
 .brand-title {
@@ -200,20 +216,6 @@ select {
     font-weight: 700;
 }
 
-.room-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.stat-box {
-    padding: 14px;
-    border-radius: 18px;
-    background: #f7f9ff;
-    border: 1px solid #e8edfa;
-}
-
 .stat-label {
     display: block;
     margin-bottom: 8px;
@@ -222,18 +224,16 @@ select {
     color: #8b95a7;
 }
 
-.stat-box strong {
-    display: block;
-    font-size: 14px;
-    color: #1f2937;
-    word-break: break-word;
+.room-user-header,
+.connected-user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
-.room-members {
-    padding: 14px 16px;
-    border-radius: 18px;
-    background: #f9fbff;
-    border: 1px solid #e9eefc;
+.member-list-empty {
+    color: #9aa4b2;
 }
 
 #user-list {
@@ -313,15 +313,14 @@ select {
     background: #ffffff;
 }
 
-.connected-panel{
+.room-user-panel,
+.connected-panel {
     display: flex;
     flex-direction: column;
-    min-height: 0;
+    height: 250px;
+    min-height: 250px;
+    max-height: 250px;
     overflow: hidden;
-}
-
-#connected-user-box{
-    min-height: 0;
 }
 
 .user-count {
@@ -344,6 +343,7 @@ select {
     border-radius: 50%;
 }
 
+#room-user-list,
 #connected-user-list {
     list-style: none;
     margin: 0;
@@ -356,9 +356,10 @@ select {
     gap: 10px;
 }
 
+#room-user-list li,
 #connected-user-list li {
-    padding: 14px 16px;
-    border-radius: 16px;
+    padding: 10px 12px;
+    border-radius: 12px;
     background: #f8faff;
     border: 1px solid #e8edf8;
     color: #344054;
@@ -397,17 +398,20 @@ select {
 }
 
 #messages::-webkit-scrollbar,
+#room-user-list::-webkit-scrollbar,
 #connected-user-list::-webkit-scrollbar {
     width: 8px;
 }
 
 #messages::-webkit-scrollbar-thumb,
+#room-user-list::-webkit-scrollbar-thumb,
 #connected-user-list::-webkit-scrollbar-thumb {
     background: rgba(140, 152, 190, 0.5);
     border-radius: 999px;
 }
 
 #messages::-webkit-scrollbar-track,
+#room-user-list::-webkit-scrollbar-track,
 #connected-user-list::-webkit-scrollbar-track {
     background: transparent;
 }
@@ -613,10 +617,6 @@ select {
     .panel,
     .chat-wrapper {
         border-radius: 22px;
-    }
-
-    .room-stats {
-        grid-template-columns: 1fr;
     }
 
     #messages {

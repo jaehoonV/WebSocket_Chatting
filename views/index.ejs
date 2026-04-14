@@ -28,6 +28,7 @@
                 <input id="input_name" autocomplete="off" placeholder="이름을 입력하세요" />
                 <button type="button" id="nameSave_btn" onclick="nameSave()">입장</button>
             </div>
+            <p id="name-error" class="input-error"></p>
         </div>
 
         <div id="chat_container" class="chat-layout">
@@ -42,22 +43,16 @@
                         <span class="panel-label">현재 방</span>
                         <span id="room-badge" class="room-badge">미선택</span>
                     </div>
+                </div>
 
-                    <div class="room-stats">
-                        <div class="stat-box">
-                            <span class="stat-label">방 이름</span>
-                            <strong id="room-name">채팅방을 선택하세요</strong>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-label">참여자 수</span>
-                            <strong id="user-num">0명</strong>
-                        </div>
+                <div class="panel room-user-panel">
+                    <div class="room-user-header">
+                        <span class="panel-label">현재 방 참여자</span>
+                        <span id="room-user-count" class="user-count">0명</span>
                     </div>
-
-                    <div class="room-members">
-                        <span class="stat-label">현재 방 참여자</span>
-                        <div id="user-list" class="member-list-empty">아직 참여자가 없습니다.</div>
-                    </div>
+                    <ul id="room-user-list">
+                        <li class="member-list-empty">아직 참여자가 없습니다.</li>
+                    </ul>
                 </div>
 
                 <div class="panel select-panel">
@@ -74,7 +69,7 @@
                 </div>
 
                 <div class="panel connected-panel" id="connected-user-box">
-                    <div class="panel-header">
+                    <div class="connected-user-header">
                         <span class="panel-label">전체 접속자</span>
                         <span id="connected-user-count" class="user-count">0명</span>
                     </div>
