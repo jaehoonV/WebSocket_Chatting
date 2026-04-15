@@ -1,5 +1,9 @@
 let preJoinRoom = "";
 let username;
+let unreadCount = 0;
+const defaultTitle = document.title;
+let titleBlinkInterval = null;
+
 $('#chat_container').hide();
 const socket = io();
 
@@ -160,6 +164,43 @@ socket.on("notice", (users, userNum, name, msg) => {
 // 실시간 채팅 박스 생성
 socket.on("chat message", (name, msg, time) => {
     createNewMessage(name, msg, 'chat', time);
+    if (document.hidden && name !== username) {
+        unreadCount++;
+        startTitleBlink();
+    }
+});
+
+// 타이틀 깜빡임 시작
+function startTitleBlink() {
+    if (titleBlinkInterval) return;
+
+    let toggle = false;
+    titleBlinkInterval = setInterval(() => {
+        document.title = toggle
+            ? `🔴 (${unreadCount}) 새 메시지 도착`
+            : `⚪ (${unreadCount}) 새 메시지 도착`;
+        toggle = !toggle;
+    }, 200);
+}
+
+// 타이틀 깜빡임 중지
+function stopTitleBlink() {
+    unreadCount = 0;
+
+    if (titleBlinkInterval) {
+        clearInterval(titleBlinkInterval);
+        titleBlinkInterval = null;
+    }
+
+    document.title = defaultTitle;
+}
+
+// 채팅 페이지 진입 시 타이틀 초기화
+window.addEventListener("focus", stopTitleBlink);
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        stopTitleBlink();
+    }
 });
 
 // 메시지 새로 생성
