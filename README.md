@@ -9,5 +9,5 @@ $ npm install express socket.io ejs
 
 ## Screenshot
 <p align="center"> 
-<img src="./screenshot_gif.gif" width="600" height="341" />
+<img src="./screenshot.png" width="750" height="490" />
 </p>
